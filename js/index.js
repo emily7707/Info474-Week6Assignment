@@ -74,7 +74,20 @@
       .attr("stroke-linejoin", "round")
       .attr("stroke-linecap", "round")
       .attr("stroke-width", 1.5)
-      .attr("d", line);
+      .attr("d", line)
+      .on("mouseover", (d) => {
+        div.transition()
+          .duration(200)
+          .style("opacity", .9)
+          .style("left", (d3.event.pageX) + "px")
+          .style("top", (d3.event.pageY - 28) + "px");
+        makeScatterPlot();
+      })
+      .on("mouseout", (d) => {
+        div.transition()
+          .duration(500)
+          .style("opacity", 0);
+      });
 
     svgLineGraph.append('text')
       .attr('x', 110)
@@ -101,22 +114,64 @@
     svgScatterPlot = div.append("svg")
       .attr('width', 500)
       .attr('height', 500);
+  }
 
-    // add tooltip functionality to plot
-    svgLineGraph.selectAll('.dot')
-      .on("mouseover", (d) => {
-        div.transition()
-          .duration(200)
-          .style("opacity", .9)
-          .style("left", (d3.event.pageX) + "px")
-          .style("top", (d3.event.pageY - 28) + "px");
-        makeScatterPlot();
-      })
-      .on("mouseout", (d) => {
-        div.transition()
-          .duration(500)
-          .style("opacity", 0);
-      });
+  // make scatter plot with trend line
+  function makeScatterPlot() {
+
+    // get arrays of fertility rate data and life Expectancy data
+    let fertility_rate_data = data.map((row) => parseFloat(row["fertility_rate"]));
+    let life_expectancy_data = data.map((row) => parseFloat(row["life_expectancy"]));
+
+    // find data limits
+    let axesLimits = findMinMax(fertility_rate_data, life_expectancy_data);
+
+    // draw axes and return scaling + mapping functions
+    let mapFunctions = drawAxes(axesLimits, "fertility_rate", "life_expectancy", svgScatterPlot, {min: 50, max: 450}, {min: 50, max: 450}, false);
+
+    // plot data as points and add tooltip functionality
+    plotData(mapFunctions);
+
+    // draw title and axes labels
+    makeScatterPlotLabels();
+  }
+
+  // plot all the data points on the SVG
+  // and add tooltip functionality
+  function plotData(map) {
+
+    // mapping functions
+    let xMap = map.x;
+    let yMap = map.y;
+
+    svgScatterPlot.selectAll('.dot')
+    .data(data)
+    .enter()
+    .append('circle')
+      .attr('cx', xMap)
+      .attr('cy', yMap)
+      .attr('r', 3)
+      .attr('fill', "#4286f4")
+  }
+
+  // make title and axes labels
+  function makeScatterPlotLabels() {
+    svgScatterPlot.append('text')
+      .attr('x', 50)
+      .attr('y', 30)
+      .style('font-size', '14pt')
+      .text("Countries by Life Expectancy and Fertility Rate");
+
+    svgScatterPlot.append('text')
+      .attr('x', 130)
+      .attr('y', 490)
+      .style('font-size', '10pt')
+      .text('Fertility Rates (Avg Children per Woman)');
+
+    svgScatterPlot.append('text')
+      .attr('transform', 'translate(15, 300)rotate(-90)')
+      .style('font-size', '10pt')
+      .text('Life Expectancy (years)');
   }
 
   function parseYear(date) {
@@ -198,63 +253,5 @@
       yMin : yMin,
       yMax : yMax
     }
-  }
-
-  // make scatter plot with trend line
-  function makeScatterPlot() {
-
-    // get arrays of fertility rate data and life Expectancy data
-    let fertility_rate_data = data.map((row) => parseFloat(row["fertility_rate"]));
-    let life_expectancy_data = data.map((row) => parseFloat(row["life_expectancy"]));
-
-    // find data limits
-    let axesLimits = findMinMax(fertility_rate_data, life_expectancy_data);
-
-    // draw axes and return scaling + mapping functions
-    let mapFunctions = drawAxes(axesLimits, "fertility_rate", "life_expectancy", svgScatterPlot, {min: 50, max: 450}, {min: 50, max: 450}, false);
-
-    // plot data as points and add tooltip functionality
-    plotData(mapFunctions);
-
-    // draw title and axes labels
-    makeScatterPlotLabels();
-  }
-
-  // plot all the data points on the SVG
-  // and add tooltip functionality
-  function plotData(map) {
-
-    // mapping functions
-    let xMap = map.x;
-    let yMap = map.y;
-
-    svgScatterPlot.selectAll('.dot')
-    .data(data)
-    .enter()
-    .append('circle')
-      .attr('cx', xMap)
-      .attr('cy', yMap)
-      .attr('r', (d) => pop_map_func(d["pop_mlns"]))
-      .attr('fill', "#4286f4")
-  }
-
-  // make title and axes labels
-  function makeScatterPlotLabels() {
-    svgScatterPlot.append('text')
-      .attr('x', 50)
-      .attr('y', 30)
-      .style('font-size', '14pt')
-      .text("Countries by Life Expectancy and Fertility Rate");
-
-    svgScatterPlot.append('text')
-      .attr('x', 130)
-      .attr('y', 490)
-      .style('font-size', '10pt')
-      .text('Fertility Rates (Avg Children per Woman)');
-
-    svgScatterPlot.append('text')
-      .attr('transform', 'translate(15, 300)rotate(-90)')
-      .style('font-size', '10pt')
-      .text('Life Expectancy (years)');
   }
 })();
