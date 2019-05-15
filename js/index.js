@@ -202,7 +202,9 @@
     // plot x-axis at bottom of SVG
     let xAxis = d3.axisBottom().scale(xScale);
     //parse date to make x-axis in years
-    xScale.domain(d3.extent(data, function(d) {return parseYear(d[x]);}))
+    if (isYear) {
+      xScale.domain(d3.extent(data, function(d) {return parseYear(d[x]);}))
+    }
     svg.append("g")
       .attr('transform', 'translate(0, ' + rangeY.max + ')')
       .call(xAxis);
